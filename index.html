@@ -226,15 +226,25 @@ const SYSTEM = `Du bist Musik-Produzent, Songwriter und Marketing-Manager fuer L
 function goStep(n) {
   for(var i=0;i<5;i++){
     var el=document.getElementById('s'+i);
-    if(el){el.style.display=i===n?'block':'none';}
+    if(el){
+      el.style.display='none';
+      el.className='card hidden';
+    }
+  }
+  var target=document.getElementById('s'+n);
+  if(target){
+    target.style.display='block';
+    target.className='card';
+  }
+  for(var i=0;i<5;i++){
     var d=document.getElementById('sd'+i),l=document.getElementById('sl'+i);
     if(!d)continue;
     d.className='sdot';
     if(i<n){d.classList.add('done');d.textContent='✓';if(l)l.classList.add('done');}
     else if(i===n){d.classList.add('active');d.textContent=i+1;}
-    else{d.textContent=i+1;if(l)l.classList.remove('done');}
+    else{d.textContent=i+1;if(l&&l.classList)l.classList.remove('done');}
   }
-  window.scrollTo(0,0);
+  try{window.scrollTo(0,0);}catch(e){}
 }
 
 function setIM(m){
