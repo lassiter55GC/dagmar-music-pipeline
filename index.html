@@ -193,6 +193,7 @@ input:focus,textarea:focus{border-color:#c084fc}
       <button class="mtab" onclick="setTab('dk',this)">🎼 DistroKid</button>
       <button class="mtab" onclick="setTab('ly',this)">📋 Lyrics</button>
       <button class="mtab" onclick="setTab('cv',this)">🎨 Cover</button>
+      <button class="mtab" onclick="setTab('sum',this)">📋 Summary</button>
     </div>
     <div id="tab-tt">
       <div class="outhead"><span class="outlabel">TikTok Caption</span><button class="cpbtn" onclick="cp('ttC',this)">Kopieren</button></div>
@@ -223,6 +224,10 @@ input:focus,textarea:focus{border-color:#c084fc}
     <div id="tab-cv" class="hidden">
       <div class="outhead"><span class="outlabel">Album Cover Prompt</span><button class="cpbtn" onclick="cp('cvO',this)">Kopieren</button></div>
       <div class="out" id="cvO"></div>
+    </div>
+    <div id="tab-sum" class="hidden">
+      <div class="outhead"><span class="outlabel">📋 Gesamtübersicht</span><button class="cpbtn" onclick="cp('sumO',this)">Alles kopieren</button></div>
+      <div class="out" id="sumO" style="max-height:500px"></div>
     </div>
     <div class="divider"></div>
     <button class="btn btn-p" onclick="location.reload()">🔄 Neuen Song starten</button>
@@ -290,7 +295,7 @@ function setLang(l,btn){
 }
 
 function setTab(t,btn){
-  ['tt','ig','fb','dk','ly','cv'].forEach(function(x){document.getElementById('tab-'+x).classList.add('hidden');});
+  ['tt','ig','fb','dk','ly','cv','sum'].forEach(function(x){document.getElementById('tab-'+x).classList.add('hidden');});
   document.getElementById('tab-'+t).classList.remove('hidden');
   document.querySelectorAll('.mtab').forEach(function(b){b.classList.remove('on');});
   btn.classList.add('on');
@@ -414,7 +419,7 @@ async function runSongNeu(){
 
 async function runMarketing(){
   showL('Erstelle Marketing-Paket...');
-  var p='Erstelle Marketing-Paket.\nSong: "'+songTitel+'"\nThema: "'+songThema+'"\nStil: '+sunoStyle+'\nText:\n'+songLese+'\n\nAusgabe EXAKT:\n\nTT_CAPTION_START\n[2-3 Zeilen Deutsch 1-2 Emojis]\nTT_CAPTION_END\nTT_HASHTAGS_START\n[10-12 Tags]\nTT_HASHTAGS_END\nIG_CAPTION_START\n[3-4 Zeilen Deutsch]\nIG_CAPTION_END\nIG_HASHTAGS_START\n[12-15 Tags]\nIG_HASHTAGS_END\nFB_CAPTION_START\n[4-5 Zeilen Deutsch]\nFB_CAPTION_END\nFB_HASHTAGS_START\n[4-6 Tags]\nFB_HASHTAGS_END\nDK_GENRE_START\nPrimaeres Genre: [aus: Deutscher Pop|Dance|R&B/Soul|Weltmusik|Pop|Christlich/Gospel|Elektronisch|Folk|Rock]\nZweites Genre: [aus der Liste]\nBegruendung: [Satz]\nDK_GENRE_END\nDK_LYRICS_START\n[Songtext: keine Labels, Grossbuchstaben, kein Satzzeichen Zeilenende, keine Emojis]\nDK_LYRICS_END\nCOVER_PROMPT_START\n[Englisch 150 Woerter. Ende: 3000x3000 pixels square format professional album cover. Text overlay song title "'+songTitel+'" prominently. No artist name. No real people.]\nCOVER_PROMPT_END';
+  var p='Erstelle Marketing-Paket.\nSong: "'+songTitel+'"\nThema: "'+songThema+'"\nStil: '+sunoStyle+'\nText:\n'+songLese+'\n\nWICHTIG Hashtags: Maximal 5 Hashtags pro Plattform. #distrokid ist IMMER dabei als einer der 5.\n\nAusgabe EXAKT:\n\nTT_CAPTION_START\n[2-3 Zeilen Deutsch 1-2 Emojis]\nTT_CAPTION_END\nTT_HASHTAGS_START\n[genau 5 Hashtags, #distrokid immer dabei]\nTT_HASHTAGS_END\nIG_CAPTION_START\n[3-4 Zeilen Deutsch]\nIG_CAPTION_END\nIG_HASHTAGS_START\n[genau 5 Hashtags, #distrokid immer dabei]\nIG_HASHTAGS_END\nFB_CAPTION_START\n[4-5 Zeilen Deutsch]\nFB_CAPTION_END\nFB_HASHTAGS_START\n[genau 5 Hashtags, #distrokid immer dabei]\nFB_HASHTAGS_END\nDK_GENRE_START\nPrimaeres Genre: [aus: Deutscher Pop|Dance|R&B/Soul|Weltmusik|Pop|Christlich/Gospel|Elektronisch|Folk|Rock]\nZweites Genre: [aus der Liste]\nBegruendung: [Satz]\nDK_GENRE_END\nDK_LYRICS_START\n[Songtext: keine Labels, Grossbuchstaben, kein Satzzeichen Zeilenende, keine Emojis]\nDK_LYRICS_END\nCOVER_PROMPT_START\n[Englisch 150 Woerter. Ende: 3000x3000 pixels square format professional album cover. Text overlay song title "'+songTitel+'" prominently. No artist name. No real people.]\nCOVER_PROMPT_END';
   try{
     var r=await callClaude(p,4000);
     document.getElementById('ttC').textContent=extr(r,'TT_CAPTION_START','TT_CAPTION_END');
@@ -426,6 +431,40 @@ async function runMarketing(){
     document.getElementById('dkG').textContent=extr(r,'DK_GENRE_START','DK_GENRE_END');
     document.getElementById('dkL').textContent=extr(r,'DK_LYRICS_START','DK_LYRICS_END');
     document.getElementById('cvO').textContent=extr(r,'COVER_PROMPT_START','COVER_PROMPT_END');
+    // Build summary
+    var sum =
+      '🎵 SONG\n' +
+      '━━━━━━━━━━━━━━━━━━━━━━\n' +
+      'Titel: ' + songTitel + '\n' +
+      'Thema: ' + songThema + '\n\n' +
+      '🎹 SUNO STYLE PROMPT\n' +
+      '━━━━━━━━━━━━━━━━━━━━━━\n' +
+      sunoStyle + '\n\n' +
+      '📖 SONGTEXT (Suno-fertig)\n' +
+      '━━━━━━━━━━━━━━━━━━━━━━\n' +
+      songSuno + '\n\n' +
+      '🎵 TIKTOK\n' +
+      '━━━━━━━━━━━━━━━━━━━━━━\n' +
+      extr(r,'TT_CAPTION_START','TT_CAPTION_END') + '\n' +
+      extr(r,'TT_HASHTAGS_START','TT_HASHTAGS_END') + '\n\n' +
+      '📸 INSTAGRAM\n' +
+      '━━━━━━━━━━━━━━━━━━━━━━\n' +
+      extr(r,'IG_CAPTION_START','IG_CAPTION_END') + '\n' +
+      extr(r,'IG_HASHTAGS_START','IG_HASHTAGS_END') + '\n\n' +
+      '👥 FACEBOOK\n' +
+      '━━━━━━━━━━━━━━━━━━━━━━\n' +
+      extr(r,'FB_CAPTION_START','FB_CAPTION_END') + '\n' +
+      extr(r,'FB_HASHTAGS_START','FB_HASHTAGS_END') + '\n\n' +
+      '🎼 DISTROKID GENRE\n' +
+      '━━━━━━━━━━━━━━━━━━━━━━\n' +
+      extr(r,'DK_GENRE_START','DK_GENRE_END') + '\n\n' +
+      '📋 DISTROKID LYRICS\n' +
+      '━━━━━━━━━━━━━━━━━━━━━━\n' +
+      extr(r,'DK_LYRICS_START','DK_LYRICS_END') + '\n\n' +
+      '🎨 COVER PROMPT\n' +
+      '━━━━━━━━━━━━━━━━━━━━━━\n' +
+      extr(r,'COVER_PROMPT_START','COVER_PROMPT_END');
+    document.getElementById('sumO').textContent=sum;
     hideL();goStep(4);
   }catch(e){showE(e.message);}
 }
