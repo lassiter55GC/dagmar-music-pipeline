@@ -124,6 +124,16 @@ input:focus,textarea:focus{border-color:#c084fc}
   <!-- STEP 2: SONG GENERATOR -->
   <div class="card hidden" id="s2">
     <div class="ctitle">✍️ Song Generator</div>
+
+    <!-- Suno Style immer sichtbar -->
+    <div id="sunoStyleBox" style="margin-bottom:14px">
+      <div class="outhead">
+        <span class="outlabel">🎹 Suno Style Prompt</span>
+        <button class="cpbtn" onclick="cp('sunoStyleCopy',this)">Kopieren</button>
+      </div>
+      <div class="out" id="sunoStyleCopy" style="max-height:100px;font-size:12px;"></div>
+    </div>
+
     <label>Modus</label>
     <div class="row">
       <button class="tbtn on" id="mAuto" onclick="setSM('auto')">🎲 Automatisch</button>
@@ -142,6 +152,9 @@ input:focus,textarea:focus{border-color:#c084fc}
       <button class="lbtn" onclick="setLang('multi',this)">🌍 Mehrsprachig</button>
     </div>
     <button class="btn btn-p" id="btnS" onclick="runSong()">🎵 Song generieren</button>
+    <div style="display:flex;gap:8px">
+      <button class="btn" style="background:transparent;border:1px solid #2a2a3d;color:#64748b" onclick="goStep(1)">← Analyse</button>
+    </div>
   </div>
 
   <!-- STEP 3: SONG + FREIGABE -->
@@ -224,6 +237,11 @@ var sunoStyle='', analysisData={}, songTitel='', songThema='', songLese='', song
 const SYSTEM = `Du bist Musik-Produzent, Songwriter und Marketing-Manager fuer Label Dagmar Marina Giers. REGELN: Kein Kuenstlername auf Cover. Captions auf Deutsch. Suno Prompt keine Kuenstlernamen. DistroKid Lyrics: keine Labels, Grossbuchstaben Zeilenanfang, kein Satzzeichen Zeilenende, keine Emojis.`;
 
 function goStep(n) {
+  // Sync suno style to step 2 display
+  if(n===2){
+    var el=document.getElementById('sunoStyleCopy');
+    if(el&&sunoStyle) el.textContent=sunoStyle;
+  }
   for(var i=0;i<5;i++){
     var el=document.getElementById('s'+i);
     if(el){
@@ -349,6 +367,8 @@ async function runAnalyse(){
     var r=await callClaude(prompt,2500);
     analysisData={titel:gv(r,'SONG_TITEL'),kuenstler:gv(r,'SONG_KUENSTLER'),themes:gv(r,'LYRICS_THEMES'),genres:gv(r,'MUSIC_GENRES')};
     sunoStyle=gv(r,'SUNO_STYLE');
+    var scEl=document.getElementById('sunoStyleCopy');
+    if(scEl&&sunoStyle) scEl.textContent=sunoStyle;
     document.getElementById('oA').textContent='🎵 '+analysisData.titel+' — '+analysisData.kuenstler+'\n\n📝 LYRICS\n'+gv(r,'LYRICS_SUMMARY')+'\nMoods: '+gv(r,'LYRICS_MOODS')+'\nThemes: '+gv(r,'LYRICS_THEMES')+'\n\n🎸 MUSIK\nGenres: '+gv(r,'MUSIC_GENRES')+'\nInstrumente: '+gv(r,'MUSIC_INSTRUMENTS')+'\nBPM & Key: '+gv(r,'MUSIC_BPM_KEY')+'\n\n🎛️ PRODUKTION\n'+gv(r,'PRODUCTION');
     document.getElementById('oS').textContent=sunoStyle+'\n\nZeichen: '+sunoStyle.length+'/1000';
     document.getElementById('oF').textContent=gv(r,'FLOW_STYLE')+'\nTags: '+gv(r,'FLOW_TAGS');
