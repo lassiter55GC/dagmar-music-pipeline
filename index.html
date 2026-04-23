@@ -308,8 +308,19 @@ function setIM(m){
 
 function setSM(m){
   songMode=m;
-  document.getElementById('pAuto').style.display=m==='auto'?'block':'none';
-  document.getElementById('pInp').style.display=m==='input'?'block':'none';
+  var pAuto=document.getElementById('pAuto');
+  var pInp=document.getElementById('pInp');
+  if(m==='auto'){
+    pAuto.style.display='block';
+    pAuto.classList.remove('hidden');
+    pInp.style.display='none';
+    pInp.classList.add('hidden');
+  } else {
+    pAuto.style.display='none';
+    pAuto.classList.add('hidden');
+    pInp.style.display='block';
+    pInp.classList.remove('hidden');
+  }
   document.getElementById('mAuto').classList.toggle('on',m==='auto');
   document.getElementById('mInp').classList.toggle('on',m==='input');
 }
