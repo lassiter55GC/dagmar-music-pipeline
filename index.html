@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎵 Dagmar Music Pipeline</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;background:#0a0a0f;color:#e2e8f0;min-height:100vh}
+.header{background:linear-gradient(135deg,#1a0a2e,#0f0a1e);border-bottom:1px solid #1e1e30;padding:14px 16px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:10}
+.logo{width:40px;height:40px;background:linear-gradient(135deg,#c084fc,#818cf8);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.htitle{font-weight:800;font-size:16px;background:linear-gradient(135deg,#c084fc,#818cf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hsub{font-size:11px;color:#64748b;margin-top:2px}
+.steps{display:flex;gap:4px;align-items:center;padding:10px 16px;background:#0d0d1a;border-bottom:1px solid #1e1e30;overflow-x:auto;scrollbar-width:none}
+.steps::-webkit-scrollbar{display:none}
+.sdot{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;border:2px solid #2a2a3d;color:#64748b;flex-shrink:0;transition:all .3s}
+.sdot.active{border-color:#c084fc;color:#c084fc;background:#c084fc15}
+.sdot.done{border-color:#34d399;color:#34d399;background:#34d39915}
+.sline{width:12px;height:2px;background:#2a2a3d;border-radius:1px;flex-shrink:0;transition:all .3s}
+.sline.done{background:#34d399}
+.main{padding:14px;max-width:680px;margin:0 auto}
+.card{background:#12121a;border:1px solid #2a2a3d;border-radius:12px;padding:18px;margin-bottom:14px}
+.ctitle{font-weight:800;font-size:14px;margin-bottom:14px}
+label{font-size:11px;color:#64748b;display:block;margin-bottom:6px;letter-spacing:.05em;text-transform:uppercase;font-weight:600}
+input,textarea{width:100%;background:#0d0d1a;border:1px solid #2a2a3d;border-radius:8px;color:#e2e8f0;padding:11px 13px;font-family:system-ui,sans-serif;font-size:16px;outline:none;-webkit-appearance:none;margin-bottom:12px;-webkit-user-select:text;user-select:text}
+textarea{resize:vertical;min-height:80px}
+input:focus,textarea:focus{border-color:#c084fc}
+.btn{width:100%;padding:13px;border-radius:9px;border:none;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px;font-family:system-ui,sans-serif;-webkit-tap-highlight-color:transparent;transition:opacity .2s}
+.btn:active{opacity:.85}
+.btn-p{background:linear-gradient(135deg,#c084fc,#7c3aed);color:white}
+.btn-s{background:#34d399;color:#052e16}
+.btn-d{background:#f87171;color:#450a0a}
+.btn-g{background:#fbbf24;color:#1a0a00}
+.row{display:flex;gap:8px;margin-bottom:14px}
+.tbtn{flex:1;padding:10px 8px;border-radius:8px;border:2px solid #2a2a3d;background:transparent;color:#64748b;font-family:system-ui,sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;-webkit-tap-highlight-color:transparent}
+.tbtn.on{border-color:#c084fc;color:#c084fc;background:#c084fc22}
+.lbtn{padding:7px 13px;border-radius:20px;border:2px solid #2a2a3d;background:transparent;color:#64748b;font-size:13px;cursor:pointer;font-family:system-ui,sans-serif;-webkit-tap-highlight-color:transparent;transition:all .2s}
+.lbtn.on{border-color:#c084fc;color:#c084fc;background:#c084fc22}
+.tabs{display:flex;border-bottom:1px solid #2a2a3d;margin-bottom:14px;overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.mtab{padding:8px 12px;background:transparent;border:none;border-bottom:2px solid transparent;color:#64748b;font-size:12px;font-weight:700;cursor:pointer;font-family:system-ui,sans-serif;white-space:nowrap;-webkit-tap-highlight-color:transparent;margin-bottom:-1px}
+.mtab.on{color:#c084fc;border-bottom-color:#c084fc}
+.outhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.outlabel{font-size:11px;color:#c084fc;font-weight:700;letter-spacing:.05em;text-transform:uppercase}
+.out{background:#0d0d1a;border:1px solid #2a2a3d;border-radius:8px;padding:12px 13px;font-size:13px;line-height:1.7;white-space:pre-wrap;word-break:break-word;color:#cbd5e1;max-height:260px;overflow-y:auto;margin-bottom:14px}
+.cpbtn{background:#1e1e30;border:1px solid #3a3a55;color:#94a3b8;padding:4px 10px;border-radius:6px;font-size:11px;cursor:pointer;font-family:system-ui,sans-serif;transition:all .2s}
+.cpbtn.ok{border-color:#34d399;color:#34d399}
+.loading{display:flex;align-items:center;gap:10px;padding:16px;color:#94a3b8;font-size:13px}
+.spin{width:18px;height:18px;border:2px solid #2a2a3d;border-top-color:#c084fc;border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+.err{background:#f8717120;border:1px solid #f8717140;border-radius:8px;padding:11px 13px;color:#f87171;font-size:13px;margin-bottom:12px}
+.divider{height:1px;background:#2a2a3d;margin:14px 0}
+.hidden{display:none!important}
+.freigabe-row{display:flex;gap:10px;margin-bottom:12px}
+.frbtn{flex:1;padding:13px;border-radius:9px;border:none;font-weight:700;font-size:14px;cursor:pointer;font-family:system-ui,sans-serif}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">🎵</div>
+  <div>
+    <div class="htitle">Dagmar Music Pipeline</div>
+    <div class="hsub">YouTube / Style Prompt / Schlagwörter → Song → Marketing → Cover</div>
+  </div>
+</div>
+
+<div class="steps">
+  <div class="sdot active" id="sd0">1</div><div class="sline" id="sl0"></div>
+  <div class="sdot" id="sd1">2</div><div class="sline" id="sl1"></div>
+  <div class="sdot" id="sd2">3</div><div class="sline" id="sl2"></div>
+  <div class="sdot" id="sd3">4</div><div class="sline" id="sl3"></div>
+  <div class="sdot" id="sd4">5</div>
+</div>
+
+<div class="main">
+
+  <!-- LOADING -->
+  <div class="card loading hidden" id="ldBox">
+    <div class="spin"></div><span id="ldMsg">Bitte warten...</span>
+  </div>
+
+  <!-- ERROR -->
+  <div class="err hidden" id="errBox"></div>
+
+  <!-- STEP 0: EINGABE -->
+  <div class="card" id="s0">
+    <div class="ctitle">🔍 Eingabe</div>
+    <label>Eingabe-Modus</label>
+    <div class="row">
+      <button class="tbtn" id="mYT" onclick="setIM('yt')">🔗 YouTube</button>
+      <button class="tbtn" id="mPR" onclick="setIM('prompt')">🎛️ Style Prompt</button>
+      <button class="tbtn on" id="mKW" onclick="setIM('keys')">🎹 Schlagwörter</button>
+    </div>
+    <div id="pYT" class="hidden">
+      <label>YouTube Link</label>
+      <input type="url" id="ytUrl" placeholder="https://www.youtube.com/watch?v=...">
+    </div>
+    <div id="pPR" class="hidden">
+      <label>Fertiger Suno / Style Prompt</label>
+      <textarea id="stylePrompt" rows="4" placeholder="afro soul, epic orchestral, 118 BPM, A major..."></textarea>
+      <label>Genre / Kurzbeschreibung (optional)</label>
+      <input type="text" id="genreHint" placeholder="z.B. Afro Soul, orchestral">
+    </div>
+    <div id="pKW">
+      <label>Schlagwörter zum Musikstil</label>
+      <textarea id="keywords" rows="3" placeholder="z.B. Schlager, tanzbar, Sommer, Gran Canaria, 120 BPM, deutsch..."></textarea>
+    </div>
+    <button class="btn btn-p" id="btnA" onclick="runAnalyse()">🔍 Weiter →</button>
+  </div>
+
+  <!-- STEP 1: ANALYSE OUTPUT -->
+  <div class="card hidden" id="s1">
+    <div class="ctitle">📊 Song Analyse</div>
+    <div class="outhead"><span class="outlabel">🎵 Analyse</span><button class="cpbtn" onclick="cp('oA',this)">Kopieren</button></div>
+    <div class="out" id="oA"></div>
+    <div class="outhead"><span class="outlabel">🎹 Suno Style Prompt</span><button class="cpbtn" onclick="cp('oS',this)">Kopieren</button></div>
+    <div class="out" id="oS"></div>
+    <div class="outhead"><span class="outlabel">🌊 Google Flow Style</span><button class="cpbtn" onclick="cp('oF',this)">Kopieren</button></div>
+    <div class="out" id="oF"></div>
+    <button class="btn btn-p" onclick="goStep(2)">✍️ Weiter zum Song Generator →</button>
+  </div>
+
+  <!-- STEP 2: SONG GENERATOR -->
+  <div class="card hidden" id="s2">
+    <div class="ctitle">✍️ Song Generator</div>
+    <label>Modus</label>
+    <div class="row">
+      <button class="tbtn on" id="mAuto" onclick="setSM('auto')">🎲 Automatisch</button>
+      <button class="tbtn" id="mInp" onclick="setSM('input')">✏️ Eigene Ideen</button>
+    </div>
+    <div id="pAuto"><p style="font-size:13px;color:#94a3b8;margin-bottom:12px;">Ich wähle automatisch ein völlig neues Thema.</p></div>
+    <div id="pInp" class="hidden">
+      <label>Deine Ideen / Schlagwörter / Text</label>
+      <textarea id="songIdeas" rows="4" placeholder="Schlagwörter: Maspalomas, Sonnenuntergang, Sangria..."></textarea>
+    </div>
+    <label>Sprache</label>
+    <div class="row" style="flex-wrap:wrap;gap:8px">
+      <button class="lbtn on" onclick="setLang('de',this)">🇩🇪 Deutsch</button>
+      <button class="lbtn" onclick="setLang('en',this)">🇬🇧 Englisch</button>
+      <button class="lbtn" onclick="setLang('es',this)">🇪🇸 Spanisch</button>
+      <button class="lbtn" onclick="setLang('multi',this)">🌍 Mehrsprachig</button>
+    </div>
+    <button class="btn btn-p" id="btnS" onclick="runSong()">🎵 Song generieren</button>
+  </div>
+
+  <!-- STEP 3: SONG + FREIGABE -->
+  <div class="card hidden" id="s3">
+    <div class="ctitle">🎶 <span id="sTitel"></span></div>
+    <div id="sThema" style="font-size:12px;color:#94a3b8;margin-bottom:12px;"></div>
+    <div class="outhead"><span class="outlabel">📖 Leseversion</span><button class="cpbtn" onclick="cp('oL',this)">Kopieren</button></div>
+    <div class="out" id="oL"></div>
+    <div class="outhead"><span class="outlabel">🎵 Suno-Fertiger Text</span><button class="cpbtn" onclick="cp('oSS',this)">Kopieren</button></div>
+    <div class="out" id="oSS"></div>
+    <div class="divider"></div>
+    <div class="ctitle">🎯 Song Freigabe</div>
+    <div class="freigabe-row">
+      <button class="frbtn" style="background:#34d399;color:#052e16" onclick="runMarketing()">✅ Song ist OK!</button>
+      <button class="frbtn" style="background:#f87171;color:#450a0a" onclick="toggleFN()">❌ Nicht OK</button>
+    </div>
+    <div id="fNPanel" class="hidden">
+      <p style="font-size:12px;color:#fbbf24;margin-bottom:10px;">Alle Felder optional — leer = komplett neu.</p>
+      <label>Neuer Songtitel (optional)</label>
+      <input type="text" id="fT" placeholder="z.B. Sommer auf Gran Canaria">
+      <label>Stil / Vibe ändern (optional)</label>
+      <input type="text" id="fSt" placeholder="z.B. ruhiger, tanzbarer">
+      <label>Text-Korrekturen</label>
+      <textarea id="fFx" rows="3" placeholder="z.B. Chorus soll länger sein..."></textarea>
+      <button class="btn btn-g" onclick="runSongNeu()">🔄 Song neu generieren</button>
+    </div>
+  </div>
+
+  <!-- STEP 4: MARKETING -->
+  <div class="card hidden" id="s4">
+    <div class="ctitle">📱 Marketing & DistroKid & Cover</div>
+    <div class="tabs">
+      <button class="mtab on" onclick="setTab('tt',this)">🎵 TikTok</button>
+      <button class="mtab" onclick="setTab('ig',this)">📸 Instagram</button>
+      <button class="mtab" onclick="setTab('fb',this)">👥 Facebook</button>
+      <button class="mtab" onclick="setTab('dk',this)">🎼 DistroKid</button>
+      <button class="mtab" onclick="setTab('ly',this)">📋 Lyrics</button>
+      <button class="mtab" onclick="setTab('cv',this)">🎨 Cover</button>
+    </div>
+    <div id="tab-tt">
+      <div class="outhead"><span class="outlabel">TikTok Caption</span><button class="cpbtn" onclick="cp('ttC',this)">Kopieren</button></div>
+      <div class="out" id="ttC"></div>
+      <div class="outhead"><span class="outlabel">TikTok Hashtags</span><button class="cpbtn" onclick="cp('ttH',this)">Kopieren</button></div>
+      <div class="out" id="ttH"></div>
+    </div>
+    <div id="tab-ig" class="hidden">
+      <div class="outhead"><span class="outlabel">Instagram Caption</span><button class="cpbtn" onclick="cp('igC',this)">Kopieren</button></div>
+      <div class="out" id="igC"></div>
+      <div class="outhead"><span class="outlabel">Instagram Hashtags</span><button class="cpbtn" onclick="cp('igH',this)">Kopieren</button></div>
+      <div class="out" id="igH"></div>
+    </div>
+    <div id="tab-fb" class="hidden">
+      <div class="outhead"><span class="outlabel">Facebook Caption</span><button class="cpbtn" onclick="cp('fbC',this)">Kopieren</button></div>
+      <div class="out" id="fbC"></div>
+      <div class="outhead"><span class="outlabel">Facebook Hashtags</span><button class="cpbtn" onclick="cp('fbH',this)">Kopieren</button></div>
+      <div class="out" id="fbH"></div>
+    </div>
+    <div id="tab-dk" class="hidden">
+      <div class="outhead"><span class="outlabel">Genre Empfehlung</span><button class="cpbtn" onclick="cp('dkG',this)">Kopieren</button></div>
+      <div class="out" id="dkG"></div>
+    </div>
+    <div id="tab-ly" class="hidden">
+      <div class="outhead"><span class="outlabel">DistroKid-Konformer Songtext</span><button class="cpbtn" onclick="cp('dkL',this)">Kopieren</button></div>
+      <div class="out" id="dkL"></div>
+    </div>
+    <div id="tab-cv" class="hidden">
+      <div class="outhead"><span class="outlabel">Album Cover Prompt</span><button class="cpbtn" onclick="cp('cvO',this)">Kopieren</button></div>
+      <div class="out" id="cvO"></div>
+    </div>
+    <div class="divider"></div>
+    <button class="btn btn-p" onclick="location.reload()">🔄 Neuen Song starten</button>
+  </div>
+
+</div>
+
+<script>
+var inputMode='keys', songMode='auto', songLang='de';
+var sunoStyle='', analysisData={}, songTitel='', songThema='', songLese='', songSuno='';
+
+const SYSTEM = `Du bist Musik-Produzent, Songwriter und Marketing-Manager fuer Label Dagmar Marina Giers. REGELN: Kein Kuenstlername auf Cover. Captions auf Deutsch. Suno Prompt keine Kuenstlernamen. DistroKid Lyrics: keine Labels, Grossbuchstaben Zeilenanfang, kein Satzzeichen Zeilenende, keine Emojis.`;
+
+function goStep(n) {
+  for(var i=0;i<5;i++){
+    var el=document.getElementById('s'+i);
+    if(el){el.style.display=i===n?'block':'none';}
+    var d=document.getElementById('sd'+i),l=document.getElementById('sl'+i);
+    if(!d)continue;
+    d.className='sdot';
+    if(i<n){d.classList.add('done');d.textContent='✓';if(l)l.classList.add('done');}
+    else if(i===n){d.classList.add('active');d.textContent=i+1;}
+    else{d.textContent=i+1;if(l)l.classList.remove('done');}
+  }
+  window.scrollTo(0,0);
+}
+
+function setIM(m){
+  inputMode=m;
+  ['YT','PR','KW'].forEach(function(x){document.getElementById('p'+x).classList.add('hidden');});
+  ['mYT','mPR','mKW'].forEach(function(x){document.getElementById(x).classList.remove('on');});
+  var pm={yt:'YT',prompt:'PR',keys:'KW'},mm={yt:'mYT',prompt:'mPR',keys:'mKW'};
+  document.getElementById('p'+pm[m]).classList.remove('hidden');
+  document.getElementById(mm[m]).classList.add('on');
+  document.getElementById('btnA').textContent=m==='prompt'?'✍️ Direkt zum Song Generator →':'🔍 Weiter →';
+}
+
+function setSM(m){
+  songMode=m;
+  document.getElementById('pAuto').style.display=m==='auto'?'block':'none';
+  document.getElementById('pInp').style.display=m==='input'?'block':'none';
+  document.getElementById('mAuto').classList.toggle('on',m==='auto');
+  document.getElementById('mInp').classList.toggle('on',m==='input');
+}
+
+function setLang(l,btn){
+  songLang=l;
+  document.querySelectorAll('.lbtn').forEach(function(b){b.classList.remove('on');});
+  btn.classList.add('on');
+}
+
+function setTab(t,btn){
+  ['tt','ig','fb','dk','ly','cv'].forEach(function(x){document.getElementById('tab-'+x).classList.add('hidden');});
+  document.getElementById('tab-'+t).classList.remove('hidden');
+  document.querySelectorAll('.mtab').forEach(function(b){b.classList.remove('on');});
+  btn.classList.add('on');
+}
+
+function toggleFN(){document.getElementById('fNPanel').classList.toggle('hidden');}
+
+function showL(msg){
+  document.getElementById('ldMsg').textContent=msg;
+  document.getElementById('ldBox').classList.remove('hidden');
+  document.getElementById('errBox').classList.add('hidden');
+}
+function hideL(){document.getElementById('ldBox').classList.add('hidden');}
+function showE(msg){
+  var e=document.getElementById('errBox');
+  e.textContent='⚠️ '+msg;
+  e.classList.remove('hidden');
+  hideL();
+}
+
+function cp(id,btn){
+  var el=document.getElementById(id);if(!el)return;
+  navigator.clipboard.writeText(el.textContent).then(function(){
+    btn.textContent='✓ Kopiert!';btn.classList.add('ok');
+    setTimeout(function(){btn.textContent='Kopieren';btn.classList.remove('ok');},2000);
+  });
+}
+
+async function callClaude(prompt, maxTokens) {
+  const res = await fetch('/api/claude', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ prompt, system: SYSTEM, maxTokens: maxTokens || 4000 })
+  });
+  const d = await res.json();
+  if (!res.ok) throw new Error(d.error || 'Server Fehler ' + res.status);
+  return d.text;
+}
+
+function gv(text,key){
+  var m=text.match(new RegExp(key+':\\s*(.+?)(?=\\n[A-Z_]+:|ANALYSE_END)','s'));
+  return m?m[1].trim():'';
+}
+function extr(text,s,e){
+  var m=text.match(new RegExp(s+'\\n([\\s\\S]*?)\\n'+e));
+  return m?m[1].trim():'';
+}
+
+async function runAnalyse(){
+  document.getElementById('errBox').classList.add('hidden');
+  if(inputMode==='prompt'){
+    var sp=document.getElementById('stylePrompt').value.trim();
+    if(!sp){showE('Bitte Style Prompt eingeben!');return;}
+    sunoStyle=sp;
+    analysisData={titel:'',kuenstler:'',themes:'',genres:document.getElementById('genreHint').value||'Eigener Style'};
+    document.getElementById('oA').textContent='— Übersprungen (fertiger Style Prompt) —';
+    document.getElementById('oS').textContent=sp+'\n\nZeichen: '+sp.length+'/1000';
+    document.getElementById('oF').textContent='— Übersprungen —';
+    goStep(2);return;
+  }
+  var prompt='';
+  if(inputMode==='yt'){
+    var url=document.getElementById('ytUrl').value.trim();
+    if(!url){showE('Bitte YouTube URL eingeben!');return;}
+    prompt='Analysiere diesen YouTube Song: '+url+'\nBasiere Analyse auf Titel und deinem Wissen.';
+  } else {
+    var kw=document.getElementById('keywords').value.trim();
+    if(!kw){showE('Bitte Schlagwörter eingeben!');return;}
+    prompt='User moechte Song im Stil: "'+kw+'"\nErstelle Suno Style Prompt und Analyse. SONG_TITEL=Unbekannt SONG_KUENSTLER=Unbekannt.';
+  }
+  prompt+='\n\nAusgabe EXAKT:\n\nANALYSE_START\nSONG_TITEL: [x]\nSONG_KUENSTLER: [x]\nLYRICS_SUMMARY: [x]\nLYRICS_MOODS: [x]\nLYRICS_THEMES: [x]\nLYRICS_LANGUAGE: [x]\nMUSIC_GENRES: [x]\nMUSIC_INSTRUMENTS: [x]\nMUSIC_BPM_KEY: [x]\nMUSIC_VOCALS: [x]\nPRODUCTION: [x]\nSUNO_STYLE: [Englisch max 1000 Zeichen keine Kuenstlernamen]\nFLOW_STYLE: [x]\nFLOW_TAGS: [x]\nANALYSE_END';
+  showL('Analysiere Song...');
+  try {
+    var r=await callClaude(prompt,2500);
+    analysisData={titel:gv(r,'SONG_TITEL'),kuenstler:gv(r,'SONG_KUENSTLER'),themes:gv(r,'LYRICS_THEMES'),genres:gv(r,'MUSIC_GENRES')};
+    sunoStyle=gv(r,'SUNO_STYLE');
+    document.getElementById('oA').textContent='🎵 '+analysisData.titel+' — '+analysisData.kuenstler+'\n\n📝 LYRICS\n'+gv(r,'LYRICS_SUMMARY')+'\nMoods: '+gv(r,'LYRICS_MOODS')+'\nThemes: '+gv(r,'LYRICS_THEMES')+'\n\n🎸 MUSIK\nGenres: '+gv(r,'MUSIC_GENRES')+'\nInstrumente: '+gv(r,'MUSIC_INSTRUMENTS')+'\nBPM & Key: '+gv(r,'MUSIC_BPM_KEY')+'\n\n🎛️ PRODUKTION\n'+gv(r,'PRODUCTION');
+    document.getElementById('oS').textContent=sunoStyle+'\n\nZeichen: '+sunoStyle.length+'/1000';
+    document.getElementById('oF').textContent=gv(r,'FLOW_STYLE')+'\nTags: '+gv(r,'FLOW_TAGS');
+    hideL();goStep(1);
+  } catch(e){showE(e.message);}
+}
+
+function buildSP(fix){
+  var lm={de:'Deutsch',en:'Englisch',es:'Spanisch',multi:'Mehrsprachig'};
+  var oi=analysisData.titel&&analysisData.titel!=='Unbekannt'?'Original-Themen VERBOTEN: '+analysisData.themes:'';
+  var ideas=document.getElementById('songIdeas')?document.getElementById('songIdeas').value:'';
+  var mt=songMode==='auto'?'Waehle voellig neues Thema. '+oi:'Nutze Ideen: "'+ideas+'". '+oi;
+  return 'Schreibe Song fuer Dagmar Marina Giers.\nSTIL: '+sunoStyle+'\nMODUS: '+mt+'\nSPRACHE: '+lm[songLang]+'\n'+(fix?'AENDERUNGEN: '+fix:'')+'\n\nStruktur: Verse 1, Pre-Chorus, Chorus, Verse 2, Bridge, Outro.\n\nSONG_START\nSONG_TITEL: [x]\nSONG_THEMA: [x]\n\nLESE_START\n[Text mit Labels]\nLESE_END\n\nSUNO_START\n[Text mit [Verse] [Chorus] etc Tags]\nSUNO_END\nSONG_END';
+}
+
+function parseSong(r){
+  var tM=r.match(/SONG_TITEL:\s*(.+)/),thM=r.match(/SONG_THEMA:\s*(.+)/);
+  var leM=r.match(/LESE_START\n([\s\S]*?)\nLESE_END/),suM=r.match(/SUNO_START\n([\s\S]*?)\nSUNO_END/);
+  songTitel=tM?tM[1].trim():'Neuer Song';songThema=thM?thM[1].trim():'';
+  songLese=leM?leM[1].trim():r;songSuno=suM?suM[1].trim():r;
+  document.getElementById('sTitel').textContent=songTitel;
+  document.getElementById('sThema').textContent='💡 '+songThema;
+  document.getElementById('oL').textContent=songLese;
+  document.getElementById('oSS').textContent=songSuno;
+}
+
+async function runSong(){
+  if(songMode==='input'&&!document.getElementById('songIdeas').value.trim()){showE('Bitte Ideen eingeben!');return;}
+  showL('Schreibe Song...');
+  try{var r=await callClaude(buildSP(''),4000);parseSong(r);hideL();goStep(3);}
+  catch(e){showE(e.message);}
+}
+
+async function runSongNeu(){
+  var fix='';
+  var ft=document.getElementById('fT').value.trim(),fs=document.getElementById('fSt').value.trim(),ff=document.getElementById('fFx').value.trim();
+  if(ft)fix+='Neuer Titel: "'+ft+'". ';if(fs)fix+='Stil: '+fs+'. ';if(ff)fix+='Korrekturen: '+ff;
+  if(!fix)fix='Komplett neues Thema.';
+  showL('Schreibe neuen Song...');
+  try{var r=await callClaude(buildSP(fix),4000);parseSong(r);document.getElementById('fNPanel').classList.add('hidden');hideL();}
+  catch(e){showE(e.message);}
+}
+
+async function runMarketing(){
+  showL('Erstelle Marketing-Paket...');
+  var p='Erstelle Marketing-Paket.\nSong: "'+songTitel+'"\nThema: "'+songThema+'"\nStil: '+sunoStyle+'\nText:\n'+songLese+'\n\nAusgabe EXAKT:\n\nTT_CAPTION_START\n[2-3 Zeilen Deutsch 1-2 Emojis]\nTT_CAPTION_END\nTT_HASHTAGS_START\n[10-12 Tags]\nTT_HASHTAGS_END\nIG_CAPTION_START\n[3-4 Zeilen Deutsch]\nIG_CAPTION_END\nIG_HASHTAGS_START\n[12-15 Tags]\nIG_HASHTAGS_END\nFB_CAPTION_START\n[4-5 Zeilen Deutsch]\nFB_CAPTION_END\nFB_HASHTAGS_START\n[4-6 Tags]\nFB_HASHTAGS_END\nDK_GENRE_START\nPrimaeres Genre: [aus: Deutscher Pop|Dance|R&B/Soul|Weltmusik|Pop|Christlich/Gospel|Elektronisch|Folk|Rock]\nZweites Genre: [aus der Liste]\nBegruendung: [Satz]\nDK_GENRE_END\nDK_LYRICS_START\n[Songtext: keine Labels, Grossbuchstaben, kein Satzzeichen Zeilenende, keine Emojis]\nDK_LYRICS_END\nCOVER_PROMPT_START\n[Englisch 150 Woerter. Ende: 3000x3000 pixels square format professional album cover. Text overlay song title "'+songTitel+'" prominently. No artist name. No real people.]\nCOVER_PROMPT_END';
+  try{
+    var r=await callClaude(p,4000);
+    document.getElementById('ttC').textContent=extr(r,'TT_CAPTION_START','TT_CAPTION_END');
+    document.getElementById('ttH').textContent=extr(r,'TT_HASHTAGS_START','TT_HASHTAGS_END');
+    document.getElementById('igC').textContent=extr(r,'IG_CAPTION_START','IG_CAPTION_END');
+    document.getElementById('igH').textContent=extr(r,'IG_HASHTAGS_START','IG_HASHTAGS_END');
+    document.getElementById('fbC').textContent=extr(r,'FB_CAPTION_START','FB_CAPTION_END');
+    document.getElementById('fbH').textContent=extr(r,'FB_HASHTAGS_START','FB_HASHTAGS_END');
+    document.getElementById('dkG').textContent=extr(r,'DK_GENRE_START','DK_GENRE_END');
+    document.getElementById('dkL').textContent=extr(r,'DK_LYRICS_START','DK_LYRICS_END');
+    document.getElementById('cvO').textContent=extr(r,'COVER_PROMPT_START','COVER_PROMPT_END');
+    hideL();goStep(4);
+  }catch(e){showE(e.message);}
+}
+
+// Init
+goStep(0);
+</script>
+</body>
+</html>
