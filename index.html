@@ -66,9 +66,22 @@ input:focus,textarea:focus{border-color:#c084fc}
 
 <div class="header">
   <div class="logo">🎵</div>
-  <div>
+  <div style="flex:1">
     <div class="htitle">Dagmar Music Pipeline</div>
     <div class="hsub">YouTube / Style Prompt / Schlagwörter → Song → Marketing → Cover</div>
+  </div>
+  <button onclick="toggleArchiveModal()" style="background:#1e1e30;border:1px solid #2a2a3d;color:#c084fc;padding:8px 12px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:system-ui,sans-serif;flex-shrink:0">🗄️ Archiv</button>
+</div>
+
+<!-- ARCHIV MODAL -->
+<div id="archiveModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:#000000aa;z-index:100;overflow-y:auto">
+  <div style="background:#12121a;border:1px solid #2a2a3d;border-radius:14px;margin:20px auto;max-width:680px;padding:20px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div style="font-weight:800;font-size:16px">🗄️ Song Archiv</div>
+      <button onclick="toggleArchiveModal()" style="background:transparent;border:none;color:#64748b;font-size:20px;cursor:pointer">✕</button>
+    </div>
+    <div id="archiveModalList"></div>
+    <p id="archiveModalEmpty" style="color:#64748b;font-size:13px;text-align:center;padding:20px">Noch keine Songs gespeichert.</p>
   </div>
 </div>
 
@@ -484,6 +497,66 @@ async function runMarketing(){
 }
 
 // ── ARCHIV ──
+function toggleArchiveModal() {
+  var modal = document.getElementById('archiveModal');
+  if(modal.style.display === 'none') {
+    modal.style.display = 'block';
+    renderArchiveModal();
+  } else {
+    modal.style.display = 'none';
+  }
+}
+
+function renderArchiveModal() {
+  var archive = JSON.parse(localStorage.getItem('dmp_archive') || '[]');
+  var list = document.getElementById('archiveModalList');
+  var empty = document.getElementById('archiveModalEmpty');
+  if(archive.length === 0) {
+    list.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+  list.innerHTML = archive.map(function(e) {
+    return '<div class="arch-item">' +
+      '<div class="arch-title">🎵 ' + e.titel + '</div>' +
+      '<div class="arch-date">📅 ' + e.datum + '</div>' +
+      '<div class="arch-btns">' +
+        '<button class="arch-btn" onclick="viewModalEntry(' + e.id + ')">👁 Anzeigen</button>' +
+        '<button class="arch-btn" onclick="copyModalEntry(' + e.id + ', this)">📋 Kopieren</button>' +
+        '<button class="arch-btn del" onclick="deleteModalEntry(' + e.id + ')">🗑 Löschen</button>' +
+      '</div>' +
+      '<div id="modal-content-' + e.id + '" style="display:none;margin-top:10px">' +
+        '<div class="out" style="max-height:300px;font-size:12px">' + e.summary.replace(/</g,'&lt;') + '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function viewModalEntry(id) {
+  var el = document.getElementById('modal-content-' + id);
+  if(el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+function copyModalEntry(id, btn) {
+  var archive = JSON.parse(localStorage.getItem('dmp_archive') || '[]');
+  var entry = archive.find(function(e){ return e.id === id; });
+  if(!entry) return;
+  navigator.clipboard.writeText(entry.summary).then(function() {
+    btn.textContent = '✓ Kopiert!';
+    setTimeout(function(){ btn.textContent = '📋 Kopieren'; }, 2000);
+  });
+}
+
+function deleteModalEntry(id) {
+  if(!confirm('Song aus dem Archiv löschen?')) return;
+  var archive = JSON.parse(localStorage.getItem('dmp_archive') || '[]');
+  archive = archive.filter(function(e){ return e.id !== id; });
+  localStorage.setItem('dmp_archive', JSON.stringify(archive));
+  renderArchiveModal();
+  renderArchive();
+}
+
 function saveToArchive() {
   var summary = document.getElementById('sumO').textContent;
   if(!summary || summary.length < 10) { alert('Kein Summary vorhanden!'); return; }
