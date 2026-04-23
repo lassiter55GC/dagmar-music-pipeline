@@ -51,6 +51,13 @@ input:focus,textarea:focus{border-color:#c084fc}
 .err{background:#f8717120;border:1px solid #f8717140;border-radius:8px;padding:11px 13px;color:#f87171;font-size:13px;margin-bottom:12px}
 .divider{height:1px;background:#2a2a3d;margin:14px 0}
 .hidden{display:none!important}
+.arch-item{background:#0d0d1a;border:1px solid #2a2a3d;border-radius:8px;padding:12px;margin-bottom:10px}
+.arch-title{font-weight:700;font-size:13px;color:#c084fc;margin-bottom:4px}
+.arch-date{font-size:11px;color:#64748b;margin-bottom:8px}
+.arch-btns{display:flex;gap:8px}
+.arch-btn{padding:5px 12px;border-radius:6px;border:1px solid #2a2a3d;background:transparent;color:#94a3b8;font-size:12px;cursor:pointer;font-family:system-ui,sans-serif}
+.arch-btn:hover{border-color:#c084fc;color:#c084fc}
+.arch-btn.del{color:#f87171;border-color:#f87171}
 .freigabe-row{display:flex;gap:10px;margin-bottom:12px}
 .frbtn{flex:1;padding:13px;border-radius:9px;border:none;font-weight:700;font-size:14px;cursor:pointer;font-family:system-ui,sans-serif}
 </style>
@@ -194,6 +201,7 @@ input:focus,textarea:focus{border-color:#c084fc}
       <button class="mtab" onclick="setTab('ly',this)">📋 Lyrics</button>
       <button class="mtab" onclick="setTab('cv',this)">🎨 Cover</button>
       <button class="mtab" onclick="setTab('sum',this)">📋 Summary</button>
+      <button class="mtab" onclick="setTab('arch',this)">🗄️ Archiv</button>
     </div>
     <div id="tab-tt">
       <div class="outhead"><span class="outlabel">TikTok Caption</span><button class="cpbtn" onclick="cp('ttC',this)">Kopieren</button></div>
@@ -228,6 +236,11 @@ input:focus,textarea:focus{border-color:#c084fc}
     <div id="tab-sum" class="hidden">
       <div class="outhead"><span class="outlabel">📋 Gesamtübersicht</span><button class="cpbtn" onclick="cp('sumO',this)">Alles kopieren</button></div>
       <div class="out" id="sumO" style="max-height:500px"></div>
+      <button class="btn btn-p" style="margin-top:8px" onclick="saveToArchive()">💾 Im Archiv speichern</button>
+    </div>
+    <div id="tab-arch" class="hidden">
+      <div id="archiveList"></div>
+      <p id="archiveEmpty" style="color:#64748b;font-size:13px;text-align:center;padding:20px">Noch keine Songs gespeichert.</p>
     </div>
     <div class="divider"></div>
     <button class="btn btn-p" onclick="location.reload()">🔄 Neuen Song starten</button>
@@ -295,7 +308,8 @@ function setLang(l,btn){
 }
 
 function setTab(t,btn){
-  ['tt','ig','fb','dk','ly','cv','sum'].forEach(function(x){document.getElementById('tab-'+x).classList.add('hidden');});
+  ['tt','ig','fb','dk','ly','cv','sum','arch'].forEach(function(x){document.getElementById('tab-'+x).classList.add('hidden');});
+  if(t==='arch') renderArchive();
   document.getElementById('tab-'+t).classList.remove('hidden');
   document.querySelectorAll('.mtab').forEach(function(b){b.classList.remove('on');});
   btn.classList.add('on');
@@ -467,6 +481,73 @@ async function runMarketing(){
     document.getElementById('sumO').textContent=sum;
     hideL();goStep(4);
   }catch(e){showE(e.message);}
+}
+
+// ── ARCHIV ──
+function saveToArchive() {
+  var summary = document.getElementById('sumO').textContent;
+  if(!summary || summary.length < 10) { alert('Kein Summary vorhanden!'); return; }
+  var archive = JSON.parse(localStorage.getItem('dmp_archive') || '[]');
+  var entry = {
+    id: Date.now(),
+    titel: songTitel || 'Unbekannter Song',
+    datum: new Date().toLocaleDateString('de-DE', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}),
+    summary: summary
+  };
+  archive.unshift(entry);
+  // Max 50 entries
+  if(archive.length > 50) archive = archive.slice(0, 50);
+  localStorage.setItem('dmp_archive', JSON.stringify(archive));
+  alert('✅ "' + entry.titel + '" im Archiv gespeichert!');
+}
+
+function renderArchive() {
+  var archive = JSON.parse(localStorage.getItem('dmp_archive') || '[]');
+  var list = document.getElementById('archiveList');
+  var empty = document.getElementById('archiveEmpty');
+  if(archive.length === 0) {
+    list.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+  list.innerHTML = archive.map(function(e) {
+    return '<div class="arch-item">' +
+      '<div class="arch-title">🎵 ' + e.titel + '</div>' +
+      '<div class="arch-date">📅 ' + e.datum + '</div>' +
+      '<div class="arch-btns">' +
+        '<button class="arch-btn" onclick="viewArchiveEntry(' + e.id + ')">👁 Anzeigen</button>' +
+        '<button class="arch-btn" onclick="copyArchiveEntry(' + e.id + ', this)">📋 Kopieren</button>' +
+        '<button class="arch-btn del" onclick="deleteArchiveEntry(' + e.id + ')">🗑 Löschen</button>' +
+      '</div>' +
+      '<div id="arch-content-' + e.id + '" style="display:none;margin-top:10px">' +
+        '<div class="out" style="max-height:300px;font-size:12px">' + e.summary.replace(/</g,'&lt;') + '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function viewArchiveEntry(id) {
+  var el = document.getElementById('arch-content-' + id);
+  if(el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+function copyArchiveEntry(id, btn) {
+  var archive = JSON.parse(localStorage.getItem('dmp_archive') || '[]');
+  var entry = archive.find(function(e){ return e.id === id; });
+  if(!entry) return;
+  navigator.clipboard.writeText(entry.summary).then(function() {
+    btn.textContent = '✓ Kopiert!';
+    setTimeout(function(){ btn.textContent = '📋 Kopieren'; }, 2000);
+  });
+}
+
+function deleteArchiveEntry(id) {
+  if(!confirm('Song aus dem Archiv löschen?')) return;
+  var archive = JSON.parse(localStorage.getItem('dmp_archive') || '[]');
+  archive = archive.filter(function(e){ return e.id !== id; });
+  localStorage.setItem('dmp_archive', JSON.stringify(archive));
+  renderArchive();
 }
 
 // Init
