@@ -107,10 +107,11 @@ input:focus,textarea:focus{border-color:#c084fc}
   <div class="card" id="s0">
     <div class="ctitle">🔍 Eingabe</div>
     <label>Eingabe-Modus</label>
-    <div class="row">
+    <div class="row" style="flex-wrap:wrap">
       <button class="tbtn" id="mYT" onclick="setIM('yt')">🔗 YouTube</button>
       <button class="tbtn" id="mPR" onclick="setIM('prompt')">🎛️ Style Prompt</button>
       <button class="tbtn on" id="mKW" onclick="setIM('keys')">🎹 Schlagwörter</button>
+      <button class="tbtn" id="mFS" onclick="setIM('fertig')" style="border-color:#34d399;color:#34d399">✅ Fertiger Song</button>
     </div>
     <div id="pYT" class="hidden">
       <label>YouTube Link</label>
@@ -125,6 +126,15 @@ input:focus,textarea:focus{border-color:#c084fc}
     <div id="pKW">
       <label>Schlagwörter zum Musikstil</label>
       <textarea id="keywords" rows="3" placeholder="z.B. Schlager, tanzbar, Sommer, Gran Canaria, 120 BPM, deutsch..."></textarea>
+    </div>
+    <div id="pFS" class="hidden">
+      <p style="font-size:13px;color:#34d399;margin-bottom:12px;">Du hast bereits Suno Style und Liedtext — direkt zu Marketing, DistroKid & Cover.</p>
+      <label>Songtitel</label>
+      <input type="text" id="fsTitel" placeholder="z.B. Mein Sommerlied">
+      <label>Suno Style Prompt</label>
+      <textarea id="fsStyle" rows="4" placeholder="afro soul, epic orchestral, 118 BPM, A major..."></textarea>
+      <label>Liedtext (vollständig)</label>
+      <textarea id="fsLyrics" rows="8" placeholder="Dein fertiger Liedtext hier einfügen..."></textarea>
     </div>
     <button class="btn btn-p" id="btnA" onclick="runAnalyse()">🔍 Weiter →</button>
   </div>
@@ -298,12 +308,19 @@ function goStep(n) {
 
 function setIM(m){
   inputMode=m;
-  ['YT','PR','KW'].forEach(function(x){document.getElementById('p'+x).classList.add('hidden');});
-  ['mYT','mPR','mKW'].forEach(function(x){document.getElementById(x).classList.remove('on');});
-  var pm={yt:'YT',prompt:'PR',keys:'KW'},mm={yt:'mYT',prompt:'mPR',keys:'mKW'};
+  ['YT','PR','KW','FS'].forEach(function(x){document.getElementById('p'+x).classList.add('hidden');});
+  ['mYT','mPR','mKW','mFS'].forEach(function(x){
+    var btn=document.getElementById(x);
+    btn.classList.remove('on');
+    if(x==='mFS'){btn.style.borderColor='#34d399';btn.style.color='#34d399';}
+    else{btn.style.borderColor='';btn.style.color='';}
+  });
+  var pm={yt:'YT',prompt:'PR',keys:'KW',fertig:'FS'},mm={yt:'mYT',prompt:'mPR',keys:'mKW',fertig:'mFS'};
   document.getElementById('p'+pm[m]).classList.remove('hidden');
-  document.getElementById(mm[m]).classList.add('on');
-  document.getElementById('btnA').textContent=m==='prompt'?'✍️ Direkt zum Song Generator →':'🔍 Weiter →';
+  var activeBtn=document.getElementById(mm[m]);
+  activeBtn.classList.add('on');
+  if(m==='fertig'){activeBtn.style.background='#34d39922';activeBtn.style.borderColor='#34d399';activeBtn.style.color='#34d399';}
+  document.getElementById('btnA').textContent=m==='prompt'?'✍️ Direkt zum Song Generator →':m==='fertig'?'🚀 Marketing & Co. erstellen →':'🔍 Weiter →';
 }
 
 function setSM(m){
@@ -384,6 +401,20 @@ function extr(text,s,e){
 
 async function runAnalyse(){
   document.getElementById('errBox').classList.add('hidden');
+  if(inputMode==='fertig'){
+    var ft=document.getElementById('fsTitel').value.trim();
+    var fs=document.getElementById('fsStyle').value.trim();
+    var fl=document.getElementById('fsLyrics').value.trim();
+    if(!fs){showE('Bitte Suno Style Prompt eingeben!');return;}
+    if(!fl){showE('Bitte Liedtext eingeben!');return;}
+    songTitel=ft||'Fertiger Song';
+    songThema='Eigener Song';
+    sunoStyle=fs;
+    songLese=fl;
+    songSuno=fl;
+    await runMarketingFertig(ft,fs,fl);
+    return;
+  }
   if(inputMode==='prompt'){
     var sp=document.getElementById('stylePrompt').value.trim();
     if(!sp){showE('Bitte Style Prompt eingeben!');return;}
@@ -453,6 +484,36 @@ async function runSongNeu(){
   showL('Schreibe neuen Song...');
   try{var r=await callClaude(buildSP(fix),4000);parseSong(r);document.getElementById('fNPanel').classList.add('hidden');hideL();}
   catch(e){showE(e.message);}
+}
+
+async function runMarketingFertig(titel, style, lyrics){
+  showL('Erstelle Marketing-Paket...');
+  var songTitelLocal=titel||'Fertiger Song';
+  var p='Erstelle Marketing-Paket fuer diesen fertigen Song.\nSong: "'+songTitelLocal+'"\nStil: '+style+'\nText:\n'+lyrics+'\n\nWICHTIG Hashtags: Maximal 5 Hashtags pro Plattform. #distrokid ist IMMER dabei als einer der 5.\n\nAusgabe EXAKT:\n\nTT_CAPTION_START\n[2-3 Zeilen Deutsch 1-2 Emojis]\nTT_CAPTION_END\nTT_HASHTAGS_START\n[genau 5 Hashtags, #distrokid immer dabei]\nTT_HASHTAGS_END\nIG_CAPTION_START\n[3-4 Zeilen Deutsch]\nIG_CAPTION_END\nIG_HASHTAGS_START\n[genau 5 Hashtags, #distrokid immer dabei]\nIG_HASHTAGS_END\nFB_CAPTION_START\n[4-5 Zeilen Deutsch]\nFB_CAPTION_END\nFB_HASHTAGS_START\n[genau 5 Hashtags, #distrokid immer dabei]\nFB_HASHTAGS_END\nDK_GENRE_START\nPrimaeres Genre: [aus: Deutscher Pop|Dance|R&B/Soul|Weltmusik|Pop|Christlich/Gospel|Elektronisch|Folk|Rock]\nZweites Genre: [aus der Liste]\nBegruendung: [Satz]\nDK_GENRE_END\nDK_LYRICS_START\n[Songtext: keine Labels, Grossbuchstaben, kein Satzzeichen Zeilenende, keine Emojis]\nDK_LYRICS_END\nCOVER_PROMPT_START\n[Englisch 150 Woerter. Ende: 3000x3000 pixels square format professional album cover. Text overlay song title "'+songTitelLocal+'" prominently. No artist name. No real people.]\nCOVER_PROMPT_END';
+  try{
+    var r=await callClaude(p,4000);
+    document.getElementById('ttC').textContent=extr(r,'TT_CAPTION_START','TT_CAPTION_END');
+    document.getElementById('ttH').textContent=extr(r,'TT_HASHTAGS_START','TT_HASHTAGS_END');
+    document.getElementById('igC').textContent=extr(r,'IG_CAPTION_START','IG_CAPTION_END');
+    document.getElementById('igH').textContent=extr(r,'IG_HASHTAGS_START','IG_HASHTAGS_END');
+    document.getElementById('fbC').textContent=extr(r,'FB_CAPTION_START','FB_CAPTION_END');
+    document.getElementById('fbH').textContent=extr(r,'FB_HASHTAGS_START','FB_HASHTAGS_END');
+    document.getElementById('dkG').textContent=extr(r,'DK_GENRE_START','DK_GENRE_END');
+    document.getElementById('dkL').textContent=extr(r,'DK_LYRICS_START','DK_LYRICS_END');
+    document.getElementById('cvO').textContent=extr(r,'COVER_PROMPT_START','COVER_PROMPT_END');
+    var sum =
+      '🎵 SONG\n━━━━━━━━━━━━━━━━━━━━━━\nTitel: '+songTitelLocal+'\n\n'+
+      '🎹 SUNO STYLE PROMPT\n━━━━━━━━━━━━━━━━━━━━━━\n'+style+'\n\n'+
+      '📖 SONGTEXT\n━━━━━━━━━━━━━━━━━━━━━━\n'+lyrics+'\n\n'+
+      '🎵 TIKTOK\n━━━━━━━━━━━━━━━━━━━━━━\n'+extr(r,'TT_CAPTION_START','TT_CAPTION_END')+'\n'+extr(r,'TT_HASHTAGS_START','TT_HASHTAGS_END')+'\n\n'+
+      '📸 INSTAGRAM\n━━━━━━━━━━━━━━━━━━━━━━\n'+extr(r,'IG_CAPTION_START','IG_CAPTION_END')+'\n'+extr(r,'IG_HASHTAGS_START','IG_HASHTAGS_END')+'\n\n'+
+      '👥 FACEBOOK\n━━━━━━━━━━━━━━━━━━━━━━\n'+extr(r,'FB_CAPTION_START','FB_CAPTION_END')+'\n'+extr(r,'FB_HASHTAGS_START','FB_HASHTAGS_END')+'\n\n'+
+      '🎼 DISTROKID GENRE\n━━━━━━━━━━━━━━━━━━━━━━\n'+extr(r,'DK_GENRE_START','DK_GENRE_END')+'\n\n'+
+      '📋 DISTROKID LYRICS\n━━━━━━━━━━━━━━━━━━━━━━\n'+extr(r,'DK_LYRICS_START','DK_LYRICS_END')+'\n\n'+
+      '🎨 COVER PROMPT\n━━━━━━━━━━━━━━━━━━━━━━\n'+extr(r,'COVER_PROMPT_START','COVER_PROMPT_END');
+    document.getElementById('sumO').textContent=sum;
+    hideL();goStep(4);
+  }catch(e){showE(e.message);}
 }
 
 async function runMarketing(){
